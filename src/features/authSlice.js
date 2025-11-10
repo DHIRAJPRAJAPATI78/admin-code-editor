@@ -4,7 +4,7 @@ import axios from "axios";
 // Base API URL
 const API_URL = "http://localhost:3000/user";
 
-// ✅ Register Admin
+//  Register Admin
 export const registerAdmin = createAsyncThunk(
   "admin/register",
   async (formData, { rejectWithValue }) => {
@@ -19,7 +19,7 @@ export const registerAdmin = createAsyncThunk(
   }
 );
 
-// ✅ Login User/Admin
+//  Login User/Admin
 export const loginUser = createAsyncThunk(
   "admin/login",
   async (credentials, { rejectWithValue }) => {
@@ -34,7 +34,7 @@ export const loginUser = createAsyncThunk(
   }
 );
 
-// ✅ Logout
+//  Logout
 export const logoutUser = createAsyncThunk(
   "admin/logout",
   async (_, { rejectWithValue }) => {

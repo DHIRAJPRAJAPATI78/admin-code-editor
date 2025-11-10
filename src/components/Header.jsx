@@ -26,7 +26,7 @@ const Header = () => {
   }, []);
 
   const navLinks = [
-    { name: "Problem", href: "/admin/problem" },
+    { name: "Problem", href: "/admin/problems" },
     { name: "Contest", href: "/admin/contest" },
     { name: "Reports", href: "/admin/reports" },
     { name: "Settings", href: "/admin/settings", type: "mobile" },

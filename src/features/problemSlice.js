@@ -1,15 +1,14 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-// Base URL for your backend
-const API_URL = "http://localhost:3000/admin/problems";
+const API_URL = "http://localhost:3000/admin";
 
-// ✅ Create Problem
+// Create Problem
 export const createProblem = createAsyncThunk(
   "problem/create",
   async (data, { rejectWithValue }) => {
     try {
-      const res = await axios.post(`${API_URL}`, data, { withCredentials: true });
+      const res = await axios.post(`${API_URL}/create`, data, { withCredentials: true });
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.error || "Failed to create problem");
@@ -17,12 +16,12 @@ export const createProblem = createAsyncThunk(
   }
 );
 
-// ✅ Get All Problems
+// Get All Problems
 export const getAllProblems = createAsyncThunk(
   "problem/getAll",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await axios.get(`${API_URL}`, { withCredentials: true });
+      const res = await axios.get(`${API_URL}/getAllProblem`, { withCredentials: true });
       return res.data.problems;
     } catch (err) {
       return rejectWithValue("Failed to fetch problems");
@@ -30,15 +29,30 @@ export const getAllProblems = createAsyncThunk(
   }
 );
 
-// ✅ Delete Problem
+// Delete Problem
 export const deleteProblem = createAsyncThunk(
   "problem/delete",
   async (id, { rejectWithValue }) => {
     try {
-      await axios.delete(`${API_URL}/${id}`, { withCredentials: true });
+      await axios.delete(`${API_URL}/delete/${id}`, { withCredentials: true });
       return id;
     } catch (err) {
       return rejectWithValue("Failed to delete problem");
+    }
+  }
+);
+
+// Update Problem
+export const updateProblem = createAsyncThunk(
+  "problem/update",
+  async ({ id, updatedData }, { rejectWithValue }) => {
+    try {
+      const res = await axios.put(`${API_URL}/update/${id}`, updatedData, {
+        withCredentials: true,
+      });
+      return res.data.problem;
+    } catch (error) {
+      return rejectWithValue("Failed to update problem");
     }
   }
 );
@@ -59,9 +73,11 @@ const problemSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // ✅ Create Problem
+      // Create Problem
       .addCase(createProblem.pending, (state) => {
         state.loading = true;
+        state.error = null;
+        state.success = null;
       })
       .addCase(createProblem.fulfilled, (state, action) => {
         state.loading = false;
@@ -73,7 +89,7 @@ const problemSlice = createSlice({
         state.error = action.payload;
       })
 
-      // ✅ Get All Problems
+      // Get All Problems
       .addCase(getAllProblems.pending, (state) => {
         state.loading = true;
       })
@@ -86,9 +102,33 @@ const problemSlice = createSlice({
         state.error = action.payload;
       })
 
-      // ✅ Delete Problem
+      // Delete Problem
+      .addCase(deleteProblem.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(deleteProblem.fulfilled, (state, action) => {
+        state.loading = false;
         state.problems = state.problems.filter((p) => p._id !== action.payload);
+        state.success = "Problem deleted successfully!";
+      })
+      .addCase(deleteProblem.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // Update Problem
+      .addCase(updateProblem.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(updateProblem.fulfilled, (state, action) => {
+        state.loading = false;
+        state.success = "Problem updated successfully!";
+        const index = state.problems.findIndex((p) => p._id === action.payload._id);
+        if (index !== -1) state.problems[index] = action.payload;
+      })
+      .addCase(updateProblem.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });
