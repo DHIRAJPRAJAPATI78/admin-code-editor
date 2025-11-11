@@ -102,7 +102,7 @@ const Problem = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
     >
-      <Toaster position="top-right" />
+      <Toaster position="top-center" />
       <motion.div
         className="max-w-5xl w-full bg-[#161b22] p-8 border border-gray-800 rounded-xl shadow-lg"
         initial={{ y: 40, opacity: 0 }}

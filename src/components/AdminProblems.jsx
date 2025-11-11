@@ -24,19 +24,19 @@ const AdminProblems = () => {
   const { problems, loading, error, success } = useSelector(
     (state) => state.problem
   );
-
-  // Local state
+console.log(problems);
+ 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDifficulty, setFilterDifficulty] = useState("");
   const [sortOption, setSortOption] = useState("latest");
   const [selectedProblem, setSelectedProblem] = useState(null);
 
-  // ✅ Fetch problems on mount
+
   useEffect(() => {
     dispatch(getAllProblems());
   }, [dispatch]);
 
-  // ✅ Toast feedback
+  
   useEffect(() => {
     if (success) {
       toast.success(success);
@@ -48,20 +48,25 @@ const AdminProblems = () => {
     }
   }, [success, error, dispatch]);
 
-  // ✅ Filter + Search + Sort Logic
-  const filteredProblems = problems
-    .filter((p) =>
-      p.title.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .filter((p) =>
-      filterDifficulty ? p.difficulty === filterDifficulty : true
-    )
-    .sort((a, b) => {
-      if (sortOption === "latest") return new Date(b.createdAt) - new Date(a.createdAt);
-      if (sortOption === "oldest") return new Date(a.createdAt) - new Date(b.createdAt);
-      if (sortOption === "title") return a.title.localeCompare(b.title);
-      return 0;
-    });
+  //  Filter + Search + Sort Logic
+
+const filteredProblems = problems
+  .filter((p) => {
+    const titleMatch = p.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const creatorName = `${p.creator?.firstName || ""} ${p.creator?.lastName || ""}`.toLowerCase();
+    const creatorMatch = creatorName.includes(searchTerm.toLowerCase());
+    return titleMatch || creatorMatch;
+  })
+  .filter((p) =>
+    filterDifficulty ? p.difficulty === filterDifficulty : true
+  )
+  .sort((a, b) => {
+    if (sortOption === "latest") return new Date(b.createdAt) - new Date(a.createdAt);
+    if (sortOption === "oldest") return new Date(a.createdAt) - new Date(b.createdAt);
+    if (sortOption === "title") return a.title.localeCompare(b.title);
+    return 0;
+  });
+
 
   const handleDelete = (id) => {
     setSelectedProblem(id);
@@ -83,7 +88,7 @@ const AdminProblems = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
     >
-      <Toaster position="top-right" />
+      <Toaster position="top-center" />
 
       <div className="max-w-7xl mx-auto">
         {/* Header */}

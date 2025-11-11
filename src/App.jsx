@@ -5,7 +5,7 @@ import AdminProblems from "./components/AdminProblems";
 import Problem from "./components/create_problem/Problem";
 import AdminContest from "./components/AdminContest";
 import ContestForm from "./components/create_contest/ContestForm";
-import { useSelector ,useDispatch} from "react-redux";
+import AdminProfile from "./components/profile/AdminProfile";
 
 function App() {
   // const dispath=useDispatch();
@@ -15,6 +15,7 @@ function App() {
       <Routes >
         <Route path='/' element={<Body />} >
         <Route path='/admin/login' element={<AdminRegister />} />
+        <Route path="/admin/profile" element={<AdminProfile/>}/>
         <Route path='/admin/problems' element={<AdminProblems />} />
         <Route path='/admin/problem/create' element={<Problem/>} />
         <Route path='/contest' element={<AdminContest />} />

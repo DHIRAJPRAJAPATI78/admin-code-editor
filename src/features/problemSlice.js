@@ -22,6 +22,7 @@ export const getAllProblems = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const res = await axios.get(`${API_URL}/getAllProblem`, { withCredentials: true });
+      console.log(res);
       return res.data.problems;
     } catch (err) {
       return rejectWithValue("Failed to fetch problems");
@@ -37,7 +38,7 @@ export const deleteProblem = createAsyncThunk(
       await axios.delete(`${API_URL}/delete/${id}`, { withCredentials: true });
       return id;
     } catch (err) {
-      return rejectWithValue("Failed to delete problem");
+      return rejectWithValue("Failed to delete problem or you are not creator of this problem");
     }
   }
 );

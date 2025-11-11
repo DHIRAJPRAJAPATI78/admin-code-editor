@@ -31,7 +31,13 @@ const AdminAuth = () => {
 
     if (isLogin) {
       if (!formData.email || !formData.password) {
-        toast.error("Please enter both email and password");
+        toast.error("Please enter both email and password",{
+        style: {
+          background: "#1a1a1a",
+          color: "#FFA116",
+          border: "1px solid #333",
+        },
+      });
         return;
       }
       dispatch(
@@ -44,28 +50,45 @@ const AdminAuth = () => {
         !formData.email ||
         !formData.password
       ) {
-        toast.error("Please fill in all fields");
+        toast.error("Please fill in all fields",{
+        style: {
+          background: "#1a1a1a",
+          color: "#FFA116",
+          border: "1px solid #333",
+        },
+      });
         return;
       }
       dispatch(registerAdmin(formData));
     }
   };
 
-  // Navigate when successful login/register
   useEffect(() => {
     if (success) {
-      toast.success(isLogin ? "Login successful!" : "Registration successful!");
+      toast.success(isLogin ? "Login successful!" : "Registration successful!",{
+        style: {
+          background: "#1a1a1a",
+          color: "#FFA116",
+          border: "1px solid #333",
+        },
+      });
       setTimeout(() => {
-        navigate("/admin/dashboard");
+        navigate("/admin/profile");
         dispatch(clearAdminState());
       }, 1200);
     }
   }, [success, navigate, dispatch, isLogin]);
 
-  // Handle API errors gracefully
+
   useEffect(() => {
     if (error) {
-      toast.error(error);
+      toast.error(error,{
+        style: {
+          background: "#1a1a1a",
+          color: "#FFA116",
+          border: "1px solid #333",
+        },
+      });
       dispatch(clearAdminState());
     }
   }, [error, dispatch]);
