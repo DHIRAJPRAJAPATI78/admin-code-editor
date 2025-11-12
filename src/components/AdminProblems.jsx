@@ -14,7 +14,7 @@ import {
   X,
   Info,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -58,7 +58,7 @@ const filteredProblems = problems
     return titleMatch || creatorMatch;
   })
   .filter((p) =>
-    filterDifficulty ? p.difficulty === filterDifficulty : true
+    filterDifficulty ? p.difficulty.toLowerCase() === filterDifficulty.toLowerCase() : true
   )
   .sort((a, b) => {
     if (sortOption === "latest") return new Date(b.createdAt) - new Date(a.createdAt);
@@ -225,12 +225,12 @@ const filteredProblems = problems
                           : "Unknown"}
                       </td>
                       <td className="px-6 py-3 text-right flex justify-end gap-3">
-                        <button
-                          onClick={() => navigate(`/admin/problem/edit/${p._id}`)}
+                        <Link
+                         to={`/admin/problem/edit/${p._id}`}
                           className="text-yellow-400 hover:text-yellow-300 font-semibold transition"
                         >
                           Edit
-                        </button>
+                        </Link>
                         <button
                           onClick={() => handleDelete(p._id)}
                           className="text-red-500 hover:text-red-400 transition transform hover:scale-110"

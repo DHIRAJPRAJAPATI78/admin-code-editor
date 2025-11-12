@@ -6,6 +6,7 @@ import Problem from "./components/create_problem/Problem";
 import AdminContest from "./components/AdminContest";
 import ContestForm from "./components/create_contest/ContestForm";
 import AdminProfile from "./components/profile/AdminProfile";
+import UpdateProblemForm from "./components/create_problem/UpdateProblemForm";
 
 function App() {
   // const dispath=useDispatch();
@@ -18,6 +19,7 @@ function App() {
         <Route path="/admin/profile" element={<AdminProfile/>}/>
         <Route path='/admin/problems' element={<AdminProblems />} />
         <Route path='/admin/problem/create' element={<Problem/>} />
+        <Route path='/admin/problem/edit/:id' element={<UpdateProblemForm/>} />
         <Route path='/contest' element={<AdminContest />} />
         <Route path='/edit/:id' element={<ContestForm />} />
         </Route>

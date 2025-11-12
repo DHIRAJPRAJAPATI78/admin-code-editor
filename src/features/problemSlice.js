@@ -52,8 +52,8 @@ export const updateProblem = createAsyncThunk(
         withCredentials: true,
       });
       return res.data.problem;
-    } catch (error) {
-      return rejectWithValue("Failed to update problem");
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.error||"Failed to update problem");
     }
   }
 );

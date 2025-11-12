@@ -1,7 +1,18 @@
+
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { createProblem, clearProblemState } from "../../features/problemSlice";
-import { Loader2, Plus, Trash2, ChevronDown, ChevronUp, Code2 } from "lucide-react";
+import {
+  Loader2,
+  Plus,
+  Trash2,
+  ChevronDown,
+  ChevronUp,
+  Code2,
+  ClipboardPaste,
+  X,
+  CheckCircle,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import toast, { Toaster } from "react-hot-toast";
@@ -17,22 +28,24 @@ const Problem = () => {
   const [expandHidden, setExpandHidden] = useState(false);
   const [expandSolution, setExpandSolution] = useState(false);
 
+  const [showJsonModal, setShowJsonModal] = useState(false);
+  const [jsonInput, setJsonInput] = useState("");
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    difficulty: "Easy",
+    difficulty: "easy",
     tags: "",
-    visibleTestCase: [{ input: "", output: "" }],
+    visibleTestCase: [{ input: "", output: "", explanation: "" }],
     hiddenTestCases: [{ input: "", output: "" }],
-    refrenceSolution: [{ language: "cpp", code: "" }],
+    refrenceSolution: [{ language: "cpp", solution: "" }],
     editorial: "",
   });
 
-  //  Handle change
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  //  Dynamic test case handling
+  // ====== Test Case Handlers ======
   const handleTestChange = (type, index, field, value) => {
     const updated = [...formData[type]];
     updated[index][field] = value;
@@ -40,9 +53,13 @@ const Problem = () => {
   };
 
   const addTestCase = (type) => {
+    const newCase =
+      type === "visibleTestCase"
+        ? { input: "", output: "", explanation: "" }
+        : { input: "", output: "" };
     setFormData({
       ...formData,
-      [type]: [...formData[type], { input: "", output: "" }],
+      [type]: [...formData[type], newCase],
     });
   };
 
@@ -51,7 +68,7 @@ const Problem = () => {
     setFormData({ ...formData, [type]: updated });
   };
 
-  //  Dynamic reference solution
+  // ====== Reference Solution Handlers ======
   const handleSolutionChange = (index, field, value) => {
     const updated = [...formData.refrenceSolution];
     updated[index][field] = value;
@@ -61,7 +78,10 @@ const Problem = () => {
   const addSolution = () => {
     setFormData({
       ...formData,
-      refrenceSolution: [...formData.refrenceSolution, { language: "", code: "" }],
+      refrenceSolution: [
+        ...formData.refrenceSolution,
+        { language: "", solution: "" },
+      ],
     });
   };
 
@@ -70,17 +90,55 @@ const Problem = () => {
     setFormData({ ...formData, refrenceSolution: updated });
   };
 
-  //  Submit
+  // ====== Submit Form ======
   const handleSubmit = (e) => {
     e.preventDefault();
     const data = {
       ...formData,
-      tags: formData.tags.split(",").map((t) => t.trim()),
+      difficulty: formData.difficulty.toLowerCase(),
+      tags:
+        typeof formData.tags === "string"
+          ? formData.tags.split(",").map((t) => t.trim())
+          : formData.tags,
     };
     dispatch(createProblem(data));
   };
 
-  //  Toast & redirect
+  // ====== Apply JSON from Modal ======
+  const handleJsonApply = () => {
+    try {
+      const parsed = JSON.parse(jsonInput);
+
+      if (!parsed.title || !parsed.description) {
+        toast.error("Invalid JSON: Missing title or description");
+        return;
+      }
+
+      setFormData({
+        title: parsed.title || "",
+        description: parsed.description || "",
+        difficulty: parsed.difficulty || "easy",
+        tags: Array.isArray(parsed.tags)
+          ? parsed.tags.join(", ")
+          : parsed.tags || "",
+        visibleTestCase:
+          parsed.visibleTestCase || [{ input: "", output: "", explanation: "" }],
+        hiddenTestCases:
+          parsed.hiddenTestCases || [{ input: "", output: "" }],
+        refrenceSolution:
+          parsed.refrenceSolution || [{ language: "cpp", solution: "" }],
+        editorial: parsed.editorial || "",
+      });
+
+      toast.success("JSON parsed successfully!");
+      setShowJsonModal(false);
+      setJsonInput("");
+    } catch (err) {
+      toast.error("Invalid JSON format!");
+    }
+  };
+
+  // ====== Toasts ======
   useEffect(() => {
     if (success) {
       toast.success(success);
@@ -112,15 +170,24 @@ const Problem = () => {
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold text-yellow-400">
-             Create New Problem
+            Create New Problem
           </h2>
-          <button
-            type="button"
-            onClick={() => setShowPreview(!showPreview)}
-            className="text-sm text-yellow-400 hover:underline"
-          >
-            {showPreview ? "Hide Preview" : "Show Preview"}
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setShowJsonModal(true)}
+              className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-400 text-black px-3 py-1 rounded-md text-sm font-medium"
+            >
+              <ClipboardPaste size={16} /> Paste JSON
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowPreview(!showPreview)}
+              className="text-sm text-yellow-400 hover:underline"
+            >
+              {showPreview ? "Hide Preview" : "Show Preview"}
+            </button>
+          </div>
         </div>
 
         {/* Form */}
@@ -140,7 +207,9 @@ const Problem = () => {
 
           {/* Description */}
           <div>
-            <label className="block text-sm mb-1">Description (Markdown supported)</label>
+            <label className="block text-sm mb-1">
+              Description (Markdown supported)
+            </label>
             <textarea
               name="description"
               value={formData.description}
@@ -156,7 +225,9 @@ const Problem = () => {
                 animate={{ opacity: 1 }}
                 className="bg-[#0d1117] mt-3 p-3 border border-gray-700 rounded-lg text-gray-300"
               >
-                <ReactMarkdown>{formData.description || "Nothing to preview..."}</ReactMarkdown>
+                <ReactMarkdown>
+                  {formData.description || "Nothing to preview..."}
+                </ReactMarkdown>
               </motion.div>
             )}
           </div>
@@ -171,30 +242,33 @@ const Problem = () => {
                 onChange={handleChange}
                 className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-500"
               >
-                <option>Easy</option>
-                <option>Medium</option>
-                <option>Hard</option>
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
               </select>
             </div>
             <div className="flex-1">
-              <label className="block text-sm mb-1">Tags (comma separated)</label>
+              <label className="block text-sm mb-1">
+                Tags (comma separated)
+              </label>
               <input
                 name="tags"
                 value={formData.tags}
                 onChange={handleChange}
-                placeholder="e.g. array, dp, graph"
+                placeholder="e.g. math, loop, beginner"
                 className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-500"
               />
             </div>
           </div>
 
-          {/* Test Cases (Visible) */}
+          {/* ... Test Case, Hidden Test Case, Solutions, Editorial sections remain unchanged ... */}
+          {/* Visible Test Cases */}
           <div className="bg-[#0d1117] border border-gray-700 rounded-lg p-4">
             <div
               className="flex justify-between items-center cursor-pointer mb-3"
               onClick={() => setExpandTests(!expandTests)}
             >
-              <h3 className="text-yellow-400 font-semibold flex items-center gap-2">
+              <h3 className="text-yellow-400 font-semibold">
                 Visible Test Cases
               </h3>
               {expandTests ? <ChevronUp /> : <ChevronDown />}
@@ -204,30 +278,40 @@ const Problem = () => {
               {expandTests && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                   {formData.visibleTestCase.map((test, index) => (
-                    <div key={index} className="flex flex-col sm:flex-row gap-3 mb-3">
+                    <div key={index} className="mb-3 space-y-2">
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <input
+                          placeholder="Input"
+                          value={test.input}
+                          onChange={(e) =>
+                            handleTestChange("visibleTestCase", index, "input", e.target.value)
+                          }
+                          className="flex-1 bg-[#161b22] border border-gray-700 rounded-lg px-3 py-2"
+                        />
+                        <input
+                          placeholder="Expected Output"
+                          value={test.output}
+                          onChange={(e) =>
+                            handleTestChange("visibleTestCase", index, "output", e.target.value)
+                          }
+                          className="flex-1 bg-[#161b22] border border-gray-700 rounded-lg px-3 py-2"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeTestCase("visibleTestCase", index)}
+                          className="text-red-500 hover:text-red-400"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
                       <input
-                        placeholder="Input"
-                        value={test.input}
+                        placeholder="Explanation (optional)"
+                        value={test.explanation}
                         onChange={(e) =>
-                          handleTestChange("visibleTestCase", index, "input", e.target.value)
+                          handleTestChange("visibleTestCase", index, "explanation", e.target.value)
                         }
-                        className="flex-1 bg-[#161b22] border border-gray-700 rounded-lg px-3 py-2"
+                        className="w-full bg-[#161b22] border border-gray-700 rounded-lg px-3 py-2"
                       />
-                      <input
-                        placeholder="Expected Output"
-                        value={test.output}
-                        onChange={(e) =>
-                          handleTestChange("visibleTestCase", index, "output", e.target.value)
-                        }
-                        className="flex-1 bg-[#161b22] border border-gray-700 rounded-lg px-3 py-2"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeTestCase("visibleTestCase", index)}
-                        className="text-red-500 hover:text-red-400"
-                      >
-                        <Trash2 size={18} />
-                      </button>
                     </div>
                   ))}
                   <button
@@ -248,9 +332,7 @@ const Problem = () => {
               className="flex justify-between items-center cursor-pointer mb-3"
               onClick={() => setExpandHidden(!expandHidden)}
             >
-              <h3 className="text-yellow-400 font-semibold flex items-center gap-2">
-                Hidden Test Cases
-              </h3>
+              <h3 className="text-yellow-400 font-semibold">Hidden Test Cases</h3>
               {expandHidden ? <ChevronUp /> : <ChevronDown />}
             </div>
 
@@ -296,14 +378,14 @@ const Problem = () => {
             </AnimatePresence>
           </div>
 
-          {/* Reference Solution */}
+          {/* Reference Solutions */}
           <div className="bg-[#0d1117] border border-gray-700 rounded-lg p-4">
             <div
               className="flex justify-between items-center cursor-pointer mb-3"
               onClick={() => setExpandSolution(!expandSolution)}
             >
               <h3 className="text-yellow-400 font-semibold flex items-center gap-2">
-                <Code2 size={18} /> Reference Solution
+                <Code2 size={18} /> Reference Solutions
               </h3>
               {expandSolution ? <ChevronUp /> : <ChevronDown />}
             </div>
@@ -336,9 +418,9 @@ const Problem = () => {
                       </div>
                       <textarea
                         placeholder="Enter solution code..."
-                        value={sol.code}
+                        value={sol.solution}
                         onChange={(e) =>
-                          handleSolutionChange(index, "code", e.target.value)
+                          handleSolutionChange(index, "solution", e.target.value)
                         }
                         rows="5"
                         className="w-full bg-[#161b22] border border-gray-700 rounded-lg px-3 py-2 font-mono"
@@ -359,18 +441,27 @@ const Problem = () => {
 
           {/* Editorial */}
           <div>
-            <label className="block text-sm mb-1">Editorial (optional)</label>
+            <label className="block text-sm mb-1">Editorial (Markdown)</label>
             <textarea
               name="editorial"
               value={formData.editorial}
               onChange={handleChange}
-              rows="4"
+              rows="5"
               placeholder="Explain approach or logic..."
               className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-3 py-2 focus:ring-2 focus:ring-yellow-500"
             ></textarea>
-          </div>
 
-          {/* Submit Button */}
+            {showPreview && formData.editorial && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="bg-[#0d1117] mt-3 p-3 border border-gray-700 rounded-lg text-gray-300"
+              >
+                <ReactMarkdown>{formData.editorial}</ReactMarkdown>
+              </motion.div>
+            )}
+          </div>
+          {/* Submit */}
           <motion.button
             type="submit"
             disabled={loading}
@@ -388,6 +479,61 @@ const Problem = () => {
           </motion.button>
         </form>
       </motion.div>
+
+      {/* ===== JSON Modal ===== */}
+      <AnimatePresence>
+        {showJsonModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="bg-[#161b22] border border-gray-700 p-6 rounded-xl max-w-2xl w-full mx-3 shadow-2xl"
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-yellow-400 flex items-center gap-2">
+                  <ClipboardPaste size={18} /> Paste JSON
+                </h3>
+                <button
+                  onClick={() => setShowJsonModal(false)}
+                  className="text-gray-400 hover:text-gray-200"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <textarea
+                value={jsonInput}
+                onChange={(e) => setJsonInput(e.target.value)}
+                placeholder="Paste your problem JSON here..."
+                rows="10"
+                className="w-full bg-[#0d1117] border border-gray-700 rounded-lg p-3 font-mono text-sm text-gray-300 focus:ring-2 focus:ring-yellow-500"
+              />
+
+              <div className="flex justify-end gap-3 mt-4">
+                <button
+                  onClick={() => setShowJsonModal(false)}
+                  className="px-4 py-2 rounded-md border border-gray-600 text-gray-300 hover:bg-gray-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleJsonApply}
+                  className="px-4 py-2 rounded-md bg-yellow-500 hover:bg-yellow-400 text-black font-semibold flex items-center gap-2"
+                >
+                  <CheckCircle size={16} /> Validate & Fill
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
