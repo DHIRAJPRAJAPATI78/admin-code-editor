@@ -1,20 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 import { Menu, X, Bell, Moon, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { logoutUser } from "../features/authSlice";
+import { getProfileAdmin } from "../features/profileSlice";
 
 const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
-
-  // ✅ Dummy admin user data
-  const user = {
-    firstName: "Dhiraj",
-    lastName: "Prajapati",
-    role: "Admin",
-  };
-
-  // ✅ Close dropdown when clicking outside
+  const {user}= useSelector((state)=>state.profile)
+const dispatch = useDispatch()
+  //  Close dropdown when clicking outside
+  useEffect(()=>{
+     if(!user){
+      dispatch(getProfileAdmin())
+     }
+  },[dispatch,user])
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -38,11 +40,11 @@ const Header = () => {
       <div className="max-w-7xl mx-auto px-5 h-full flex items-center justify-between">
         {/* Logo */}
         <Link
-          to="/admin/dashboard"
+          to="/"
           className="flex items-center gap-2 text-2xl font-bold text-purple-400 hover:text-purple-300 transition"
         >
           <Shield size={22} />
-          <span>AdminPanel</span>
+          <span>Admin</span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -82,14 +84,14 @@ const Header = () => {
               onClick={() => setDropdownOpen((prev) => !prev)}
               className="flex items-center focus:outline-none"
             >
-              <img
+           { user?  <img
                 src={`https://ui-avatars.com/api/?name=${user.firstName}+${user.lastName}&background=random`}
                 alt="Admin avatar"
                 className="w-9 h-9 rounded-full border border-gray-700 cursor-pointer hover:scale-[1.03] transition-transform duration-200"
-              />
+              /> : <Link to="/admin/login" className="bg-yellow-500 hover:bg-yellow-400 text-black font-semibold py-2 px-4 rounded-md transition">Login</Link>}
             </button>
 
-            {dropdownOpen && (
+            {dropdownOpen && user && (
               <div className="absolute right-0 mt-2 w-44 bg-gray-900 border border-gray-800 rounded-lg shadow-xl z-50">
                 <div className="px-4 py-2 text-gray-200 border-b border-gray-700">
                   Hello, {user.firstName}
@@ -101,7 +103,7 @@ const Header = () => {
                   <li className="px-4 py-2 hover:bg-gray-800 cursor-pointer">
                     Settings
                   </li>
-                  <li className="px-4 py-2 hover:bg-gray-800 cursor-pointer text-red-400">
+                  <li className="px-4 py-2 hover:bg-gray-800 cursor-pointer text-red-400" onClick={()=>dispatch(logoutUser())}>
                     Logout
                   </li>
                 </ul>

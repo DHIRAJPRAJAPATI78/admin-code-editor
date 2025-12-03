@@ -8,6 +8,7 @@ import {
 import { Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
+import { getProfileAdmin } from "../../features/profileSlice";
 
 const AdminAuth = () => {
   const dispatch = useDispatch();
@@ -26,7 +27,7 @@ const AdminAuth = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
 
     if (isLogin) {
@@ -40,9 +41,11 @@ const AdminAuth = () => {
       });
         return;
       }
-      dispatch(
+      await dispatch(
         loginUser({ email: formData.email, password: formData.password })
-      );
+      ).unwrap();
+      dispatch(getProfileAdmin())
+      navigate("/admin/profile");
     } else {
       if (
         !formData.firstName ||

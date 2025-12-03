@@ -11,11 +11,11 @@ export const getProfileAdmin = createAsyncThunk(
       const res = await axios.get(`${API_URL}/profile/admin`, {
         withCredentials: true,
       });
-      console.log(res);
       return res.data.admin; 
     } catch (err) {
+      console.log(err);
       return rejectWithValue(
-        err.response?.data?.message || "Failed to fetch profile"
+       err.status || err.response?.data?.message || "Failed to fetch profile"
       );
     }
   }
