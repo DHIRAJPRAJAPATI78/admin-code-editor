@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const API_URL =  "http://localhost:3000/contest";
+const API_URL = "http://localhost:3000/contest";
 
 
 
@@ -31,7 +31,7 @@ export const getAllContests = createAsyncThunk(
         withCredentials: true,
       });
       console.log(res);
-      return res.data; 
+      return res.data;
     } catch (err) {
       return rejectWithValue(
         err.response?.data?.error || "Failed to fetch contests"
@@ -39,7 +39,6 @@ export const getAllContests = createAsyncThunk(
     }
   }
 );
-
 
 // Update a contest
 export const updateContest = createAsyncThunk(
@@ -75,6 +74,39 @@ export const deleteContest = createAsyncThunk(
   }
 );
 
+// total problem ka id dega jo ab tak contest me use hua hai
+export const totalProblemsInContest = createAsyncThunk(
+  "contest/totalProblems",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${API_URL}/getcontest/problemcounts`, {
+        withCredentials: true,
+      });
+      console.log(res);
+      return res.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.error || "Failed to fetch problems in contest"
+      );
+    }
+  })
+
+  // total details of that contest
+export const getProblemIdInContest = createAsyncThunk(
+  "contest/problemIds",
+  async(id,rejectWithValue)=>{
+     try {
+      const res = await axios.get(`${API_URL}/admin/${id}`, {
+        withCredentials: true,
+      });
+      return res?.data?.contest;
+     } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.error || "Failed to fetch problem ids in contest"
+      );
+     }
+  }
+)
 
 const contestSlice = createSlice({
   name: "contest",
@@ -83,6 +115,8 @@ const contestSlice = createSlice({
     loading: false,
     error: null,
     success: null,
+    contestProblmeId: [],
+    contestDetails:null
   },
   reducers: {
     clearContestState: (state) => {
@@ -150,7 +184,36 @@ const contestSlice = createSlice({
       .addCase(deleteContest.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+
+      // Total Problems in Contest
+      .addCase(totalProblemsInContest.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(totalProblemsInContest.fulfilled, (state, action) => {
+        state.loading = false;
+        state.contestProblmeId = action.payload;
+      })
+      .addCase(totalProblemsInContest.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+       // Get Problem IDs in Contest
+      .addCase(getProblemIdInContest.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getProblemIdInContest.fulfilled, (state, action) => {
+        state.loading = false;
+        state.contestDetails = action.payload;
+      })
+      .addCase(getProblemIdInContest.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
+
   },
 });
 
