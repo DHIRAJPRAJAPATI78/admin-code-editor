@@ -6,12 +6,10 @@ import toast, { Toaster } from "react-hot-toast";
 import {
   getProblemIdInContest,
   updateContest,
-  createContest,
   totalProblemsInContest,
 } from "../../features/contestSlice";
 import { getAllProblems } from "../../features/problemSlice";
 import {
-  Plus,
   X,
   ExternalLink,
   Check,
@@ -24,12 +22,21 @@ import {
   Calendar,
   AlertCircle,
   Info,
+  Save,
 } from "lucide-react";
 
 const ContestForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  // Check if ID exists, if not redirect to contests page
+  useEffect(() => {
+    if (!id) {
+      toast.error("No contest ID provided");
+      navigate("/contests");
+    }
+  }, [id, navigate]);
 
   const { loading, contestDetails, contestProblmeId } = useSelector(
     (state) => state.contest
@@ -47,13 +54,13 @@ const ContestForm = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showProblemIds, setShowProblemIds] = useState(false);
+  const [showProblemIds, setShowProblemIds] = useState(true);
 
   // Initialize and fetch data
   useEffect(() => {
     if (problems.length === 0) {
       dispatch(getAllProblems()).catch((error) => {
-        toast.error("Failed to load problems");
+        toast.error(error || "Failed to load problems");
         console.error("Error loading problems:", error);
       });
     }
@@ -61,7 +68,7 @@ const ContestForm = () => {
 
   useEffect(() => {
     dispatch(totalProblemsInContest()).catch((error) => {
-      toast.error("Failed to load contest statistics");
+      toast.error(error || "Failed to load contest statistics");
       console.error("Error loading contest stats:", error);
     });
   }, [dispatch]);
@@ -71,11 +78,29 @@ const ContestForm = () => {
       dispatch(getProblemIdInContest(id))
         .unwrap()
         .catch((error) => {
-          toast.error("Failed to load contest details");
+          toast.error(error || "Failed to load contest details");
           console.error("Error loading contest:", error);
         });
     }
   }, [id, dispatch]);
+  const toDateTimeLocal = (isoString) => {
+    if (!isoString) return "";
+    const date = new Date(isoString);
+
+    const pad = (n) => String(n).padStart(2, "0");
+
+    return (
+      date.getFullYear() +
+      "-" +
+      pad(date.getMonth() + 1) +
+      "-" +
+      pad(date.getDate()) +
+      "T" +
+      pad(date.getHours()) +
+      ":" +
+      pad(date.getMinutes())
+    );
+  };
 
   // Prefill form when contestDetails arrive
   useEffect(() => {
@@ -83,8 +108,8 @@ const ContestForm = () => {
       setForm({
         title: contestDetails.title || "",
         description: contestDetails.description || "",
-        startTime: contestDetails.startTime?.slice(0, 16) || "",
-        endTime: contestDetails.endTime?.slice(0, 16) || "",
+        startTime: toDateTimeLocal(contestDetails.startTime),
+        endTime: toDateTimeLocal(contestDetails.endTime),
         isPublic: contestDetails.isPublic,
         problems: contestDetails.problems || [],
       });
@@ -122,7 +147,7 @@ const ContestForm = () => {
 
     // Validation
     if (form.problems.length === 0) {
-      toast.error("Please add at least one problem to create a contest");
+      toast.error("Please add at least one problem to the contest");
       return;
     }
 
@@ -134,18 +159,12 @@ const ContestForm = () => {
     setIsSubmitting(true);
 
     try {
-      if (id) {
-        await dispatch(updateContest({ id, updatedData: form })).unwrap();
-        toast.success("Contest updated successfully!");
-        navigate("/contests");
-      } else {
-        await dispatch(createContest(form)).unwrap();
-        toast.success("Contest created successfully!");
-        navigate("/contests");
-      }
+      await dispatch(updateContest({ id, updatedData: form })).unwrap();
+      toast.success("Contest updated successfully!");
+      navigate("/admin/contest");
     } catch (error) {
-      console.error("Error saving contest:", error);
-      toast.error(error.message || "Failed to save contest. Please try again.");
+      console.error("Error updating contest:", error);
+      toast.error(error || "Failed to update contest. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -228,18 +247,6 @@ const ContestForm = () => {
       />
 
       <div className='max-w-9xl mx-auto'>
-        {/* Header */}
-        <div className='mb-8'>
-          <h1 className='text-3xl md:text-4xl font-bold text-white mb-2'>
-            {id ? "Edit Contest" : "Create New Contest"}
-          </h1>
-          <p className='text-gray-400'>
-            {id
-              ? "Modify your contest details and problems"
-              : "Create a programming contest with selected problems"}
-          </p>
-        </div>
-
         <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
           {/* LEFT SECTION - Problem Selection */}
           <motion.div
@@ -275,7 +282,7 @@ const ContestForm = () => {
               </div>
 
               <AnimatePresence>
-                {form.problems.length > 0 ? (
+                {form?.problems.length > 0 ? (
                   <motion.div
                     layout
                     className='grid grid-cols-1 md:grid-cols-2 gap-4'
@@ -311,7 +318,7 @@ const ContestForm = () => {
                                   {pb?.difficulty || "Unknown"}
                                 </span>
                                 <span className='text-xs text-gray-400 font-mono bg-gray-800 px-2 py-1 rounded'>
-                                  {pid.slice(0, 8)}...
+                                  {pid}
                                 </span>
                               </div>
 
@@ -327,7 +334,7 @@ const ContestForm = () => {
 
                           <div className='flex items-center justify-between mt-4 pt-3 border-t border-gray-700'>
                             <span className='text-xs text-gray-400 truncate mr-2'>
-                              ID: {pid.slice(0, 12)}...
+                              ID: {pid}
                             </span>
                             <button
                               onClick={() => navigate(`/problems/${pid}`)}
@@ -342,18 +349,18 @@ const ContestForm = () => {
                   </motion.div>
                 ) : (
                   <motion.div
-                    initial={{ opacity: 0 }}
+                    initial={{ opacity: 1 }}
                     animate={{ opacity: 1 }}
                     className='text-center py-12'
                   >
                     <div className='w-16 h-16 mx-auto bg-gray-800 rounded-full flex items-center justify-center mb-4'>
-                      <Plus className='w-8 h-8 text-gray-400' />
+                      <X className='w-8 h-8 text-gray-400' />
                     </div>
                     <h3 className='text-white font-semibold'>
                       No problems selected
                     </h3>
                     <p className='text-gray-400 mt-1'>
-                      Add problems from the list below to create your contest
+                      Add problems from the list below to update your contest
                     </p>
                   </motion.div>
                 )}
@@ -421,8 +428,8 @@ const ContestForm = () => {
                               >
                                 {pb.difficulty}
                               </span>
-                              <code className='text-xs text-gray-400 font-mono bg-gray-900 px-2 py-1 rounded truncate max-w-[120px]'>
-                                {pb._id.slice(0, 10)}...
+                              <code className='text-xs text-gray-400 font-mono bg-gray-900 px-2 py-1 rounded  '>
+                                {pb._id}
                               </code>
                             </div>
 
@@ -444,8 +451,8 @@ const ContestForm = () => {
                                 <Check className='w-5 h-5 text-white' />
                               </div>
                             ) : (
-                              <div className='w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center group-hover:bg-blue-500'>
-                                <Plus className='w-5 h-5 text-gray-400 group-hover:text-white' />
+                              <div className='w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center'>
+                                <div className='w-4 h-4 bg-blue-400 rounded'></div>
                               </div>
                             )}
                           </motion.div>
@@ -611,7 +618,7 @@ const ContestForm = () => {
                     className={`w-full py-4 rounded-xl font-bold text-white transition-all duration-300 flex items-center justify-center gap-2 ${
                       isSubmitting || loading || form.problems.length === 0
                         ? "bg-gray-700 cursor-not-allowed"
-                        : "bg-linear-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 hover:shadow-lg hover:shadow-yellow-500/20"
+                        : "bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 hover:shadow-lg hover:shadow-blue-500/20"
                     }`}
                   >
                     {isSubmitting ? (
@@ -625,12 +632,12 @@ const ContestForm = () => {
                           }}
                           className='w-5 h-5 border-2 border-white border-t-transparent rounded-full'
                         />
-                        {id ? "Updating..." : "Creating..."}
+                        Updating...
                       </>
                     ) : (
                       <>
-                        {id ? "Update Contest" : "Create Contest"}
-                        {!id && <Plus className='w-5 h-5' />}
+                        <Save className='w-5 h-5' />
+                        Update Contest
                       </>
                     )}
                   </button>
@@ -643,7 +650,7 @@ const ContestForm = () => {
                       className='text-center text-red-400 text-sm flex items-center justify-center gap-2'
                     >
                       <AlertCircle className='w-4 h-4' />
-                      Please add at least one problem to create a contest
+                      Please add at least one problem to update the contest
                     </motion.p>
                   )}
                 </form>

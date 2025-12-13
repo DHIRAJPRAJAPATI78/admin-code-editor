@@ -49,7 +49,7 @@ export default function AddContest() {
   });
 
   const [loading, setLoading] = useState(false);
-  const [showUsedProblems, setShowUsedProblems] = useState(false);
+  const [showUsedProblems, setShowUsedProblems] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -113,43 +113,86 @@ export default function AddContest() {
       problems: prev.problems.filter((p) => p !== id),
     }));
   };
+const toUTCISOString = (localDateTime) => {
+  return new Date(localDateTime).toISOString();
+};
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
 
-    if (form.problems.length === 0) {
-      toast.error("Select at least one problem");
-      return;
-    }
+  //   if (form.problems.length === 0) {
+  //     toast.error("Select at least one problem");
+  //     return;
+  //   }
 
-    if (new Date(form.startTime) >= new Date(form.endTime)) {
-      toast.error("End time must be after start time");
-      return;
-    }
+  //   if (new Date(form.startTime) >= new Date(form.endTime)) {
+  //     toast.error("End time must be after start time");
+  //     return;
+  //   }
 
-    setLoading(true);
+  //   setLoading(true);
 
-    try {
-      await dispatch(createContest(form)).unwrap();
-      toast.success("Contest created successfully");
+  //   try {
+  //     await dispatch(createContest(form)).unwrap();
+  //     toast.success("Contest created successfully");
 
-      setForm({
-        title: "",
-        description: "",
-        startTime: "",
-        endTime: "",
-        problems: [],
-        isPublic: true,
-      });
-      setSearchQuery("");
-    } catch (err) {
-      toast.error(err || "Failed to create contest");
-    } finally {
-      setLoading(false);
-    }
-  };
+  //     setForm({
+  //       title: "",
+  //       description: "",
+  //       startTime: "",
+  //       endTime: "",
+  //       problems: [],
+  //       isPublic: true,
+  //     });
+  //     setSearchQuery("");
+  //   } catch (err) {
+  //     toast.error(err || "Failed to create contest");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-  /* ----------------------------------- UI ----------------------------------- */
+  if (form.problems.length === 0) {
+    toast.error("Select at least one problem");
+    return;
+  }
+
+  if (new Date(form.startTime) >= new Date(form.endTime)) {
+    toast.error("End time must be after start time");
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const payload = {
+      ...form,
+      startTime: toUTCISOString(form.startTime),
+      endTime: toUTCISOString(form.endTime),
+    };
+
+    await dispatch(createContest(payload)).unwrap();
+    toast.success("Contest created successfully");
+
+    setForm({
+      title: "",
+      description: "",
+      startTime: "",
+      endTime: "",
+      problems: [],
+      isPublic: true,
+    });
+    setSearchQuery("");
+  } catch (err) {
+    toast.error(err || "Failed to create contest");
+  } finally {
+    setLoading(false);
+  }
+};
+
+ 
   return (
     <div
       className='min-h-screen flex items-center justify-center px-4 pt-20 pb-8'
