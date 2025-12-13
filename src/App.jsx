@@ -9,6 +9,7 @@ import AdminContests from "./components/AdminContest";
 import Protectedroute from "./Protectedroute";
 import Header from "./components/Header";
 import Home from "./components/Home";
+import AddContest from "./components/create_contest/AddContest";
 
 function App() {
 
@@ -26,6 +27,7 @@ function App() {
         <Route path='/admin/problem/create' element={<Protectedroute><Problem/></Protectedroute>} />
         <Route path='/admin/problem/edit/:id' element={<Protectedroute><UpdateProblemForm/></Protectedroute>} />
         <Route path='/admin/contest' element={<Protectedroute><AdminContests /></Protectedroute>} />
+        <Route path='/admin/contest/create' element={<Protectedroute><AddContest /></Protectedroute>} />
         <Route path='/admin/contest/edit/:id' element={<Protectedroute><ContestForm /></Protectedroute>} />
         {/* </Route> */}
       </Routes>

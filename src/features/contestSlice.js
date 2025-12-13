@@ -82,7 +82,6 @@ export const totalProblemsInContest = createAsyncThunk(
       const res = await axios.get(`${API_URL}/getcontest/problemcounts`, {
         withCredentials: true,
       });
-      console.log(res);
       return res.data;
     } catch (error) {
       return rejectWithValue(
